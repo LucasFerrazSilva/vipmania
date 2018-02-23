@@ -66,7 +66,7 @@ public class CartItem implements Serializable {
 	}
 	
 	public Long getProductId() {
-		return productId;
+		return (product == null ? productId : product.getId());
 	}
 	
 	public void setProductId(Long productId) {

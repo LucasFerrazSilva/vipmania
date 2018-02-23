@@ -1,16 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="s" %>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="security" %>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<%@ taglib tagdir="/WEB-INF/tags" prefix="tags" %>
 
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>VipMania</title>
-</head>
-<body>
-
+<tags:pageTemplate title="">
 	<div>
 		Nome: ${product.name}
 	</div>
@@ -28,6 +23,4 @@
 		
 		<button type="submit">Adicionar ao carrinho</button>
 	</form:form>
-	
-</body>
-</html>
+</tags:pageTemplate>

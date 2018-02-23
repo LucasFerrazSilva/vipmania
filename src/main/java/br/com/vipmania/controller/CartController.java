@@ -8,7 +8,9 @@ import java.util.concurrent.Callable;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -20,6 +22,8 @@ import br.com.vipmania.model.Cart;
 import br.com.vipmania.model.CartItem;
 import br.com.vipmania.model.PaymentData;
 import br.com.vipmania.model.Product;
+import br.com.vipmania.model.User;
+import br.com.vipmania.service.EmailService;
 
 @Controller
 @RequestMapping("/cart")
@@ -34,6 +38,9 @@ public class CartController {
 	
 	@Autowired
 	private RestTemplate restTemplate;
+	
+	@Autowired
+	private EmailService emailService;
 	
 	
 	@RequestMapping("/add")
@@ -61,7 +68,7 @@ public class CartController {
 	}
 	
 	@RequestMapping(value="/finalize", method=POST)
-	public Callable<ModelAndView> finalize(ArrayList<CartItem> itens, RedirectAttributes redirectAttributes) {
+	public Callable<ModelAndView> finalize(@AuthenticationPrincipal User user, ArrayList<CartItem> itens, RedirectAttributes redirectAttributes) {
 		return () -> {
 			String uri = "http://book-payment.herokuapp.com/payment";
 			
@@ -69,6 +76,8 @@ public class CartController {
 			
 			try {
 				result = restTemplate.postForObject(uri, new PaymentData(cart.getTotalValue()), String.class);
+				
+				emailService.send(user.getEmail());
 			}
 			catch(HttpClientErrorException e) {
 				e.printStackTrace();
@@ -81,8 +90,8 @@ public class CartController {
 		};
 	}
 	
-	@RequestMapping("/remove")
-	public ModelAndView remove(Long productId, RedirectAttributes redirectAttributes) {
+	@RequestMapping("/remove/{id}")
+	public ModelAndView remove(@PathVariable("id") Long productId, RedirectAttributes redirectAttributes) {
 		Product product = productDao.get(productId);
 		
 		cart.remove(product);
