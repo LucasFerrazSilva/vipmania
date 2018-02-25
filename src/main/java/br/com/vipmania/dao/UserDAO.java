@@ -38,12 +38,19 @@ public class UserDAO implements UserDetailsService{
 	}
 
 	public void createAdmin() {
+		Role role = entityManager.find(Role.class, "ROLE_ADMIN");
+		
+		if(role == null) {
+			role = new Role("ROLE_ADMIN");
+			entityManager.persist(role);
+		}
+		
 		User admin = new User();
 		
-		admin.setName("Admin4");
-		admin.setEmail("admin4@vipmania.com");
+		admin.setName("Admin5");
+		admin.setEmail("admin5@vipmania.com");
 		admin.setPassword("$2a$04$qP517gz1KNVEJUTCkUQCY.JzEoXzHFjLAhPQjrg5iP6Z/UmWjvUhq");
-		admin.setRoles(asList(new Role("ROLE_ADMIN")));
+		admin.setRoles(asList(role));
 
 		entityManager.persist(admin);
 	}

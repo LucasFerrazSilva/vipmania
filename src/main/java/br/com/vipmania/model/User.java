@@ -1,6 +1,6 @@
 package br.com.vipmania.model;
 
-import static javax.persistence.CascadeType.PERSIST;
+import static javax.persistence.CascadeType.MERGE;
 import static javax.persistence.FetchType.EAGER;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ public class User implements UserDetails {
 	
 	private String password;
 	
-	@OneToMany(fetch=EAGER, cascade=PERSIST)
+	@OneToMany(fetch=EAGER)
 	private List<Role> roles;
 	
 
