@@ -16,6 +16,10 @@ public class Role implements GrantedAuthority{
 	private String name;
 
 	
+	public Role() {
+		//noop
+	}
+	
 	public Role(String name) {
 		this.name = name;
 	}
