@@ -40,11 +40,11 @@ public class UserDAO implements UserDetailsService{
 	public void createAdmin() {
 		Role role = entityManager.find(Role.class, "ROLE_ADMIN");
 		
-		if(role == null) {
-			role = new Role("ROLE_ADMIN");
-			entityManager.persist(role);
-		}
-		
+//		if(role == null) {
+//			role = new Role("ROLE_ADMIN");
+//			entityManager.persist(role);
+//		}
+//		
 		User admin = new User();
 		
 		admin.setName("Admin5");
