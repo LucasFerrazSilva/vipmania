@@ -1,5 +1,7 @@
 package br.com.vipmania.controller;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,7 @@ public class HomeController {
 	
 	@ResponseBody
 	@RequestMapping("/qw56d1qw89d4qwd56as4d89qwd156asd48a97qw9e8sd65asw81a6s54q8w9")
+	@Transactional
 	public String createAdmin() {
 		userDao.createAdmin();
 		
