@@ -47,8 +47,8 @@ public class UserDAO implements UserDetailsService{
 //		
 		User admin = new User();
 		
-		admin.setName("Admin5");
-		admin.setEmail("admin5@vipmania.com");
+		admin.setName("Admin6");
+		admin.setEmail("admin6@vipmania.com");
 		admin.setPassword("$2a$04$qP517gz1KNVEJUTCkUQCY.JzEoXzHFjLAhPQjrg5iP6Z/UmWjvUhq");
 		admin.setRoles(asList(role));
 
