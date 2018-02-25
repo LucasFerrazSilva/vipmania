@@ -43,7 +43,7 @@ public class UserDAO implements UserDetailsService{
 		admin.setName("Admin");
 		admin.setEmail("admin@vipmania.com");
 		admin.setPassword("$2a$04$qP517gz1KNVEJUTCkUQCY.JzEoXzHFjLAhPQjrg5iP6Z/UmWjvUhq");
-		admin.setRoles(asList(new Role("ADMIN")));
+		admin.setRoles(asList(new Role("ROLE_ADMIN")));
 
 		entityManager.persist(admin);
 	}
