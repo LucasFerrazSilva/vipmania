@@ -25,7 +25,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 			.antMatchers("/resources/**").permitAll()
 			.antMatchers("/product/form").hasRole("ADMIN")
 			.antMatchers("/cart").permitAll()
-			.antMatchers("/cart/**").permitAll()
+			.antMatchers("/cart/**").permitAll()	
 			.antMatchers(POST, "/product/save").hasRole("ADMIN")
 			.antMatchers(GET, "/product/list").hasRole("ADMIN")
 			.antMatchers("/product/**").permitAll()
