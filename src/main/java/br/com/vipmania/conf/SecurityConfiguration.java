@@ -9,7 +9,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import br.com.vipmania.dao.UserDAO;
 
@@ -23,17 +25,32 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
 			.antMatchers("/resources/**").permitAll()
-			.antMatchers("/product/form").hasRole("ADMIN")
+			.antMatchers("/product/form/**").hasRole("ADMIN")
 			.antMatchers("/cart").permitAll()
-			.antMatchers("/cart/**").permitAll()	
+			.antMatchers("/cart/add/**").permitAll()	
+			.antMatchers("/cart/remove/**").permitAll()
+			.antMatchers("/cart/finalize").authenticated()
+			.antMatchers("/cart/send-to-paypal").authenticated()
+			.antMatchers("/calcular-frete/**").permitAll()			
 			.antMatchers(POST, "/product/save").hasRole("ADMIN")
 			.antMatchers(GET, "/product/list").hasRole("ADMIN")
 			.antMatchers("/product/**").permitAll()
-			.antMatchers("/qw56d1qw89d4qwd56as4d89qwd156asd48a97qw9e8sd65asw81a6s54q8w9").permitAll()			
+			.antMatchers("/order/list-all").hasRole("ADMIN")
+			.antMatchers("/order/**").authenticated()
+			.antMatchers("/address/list-all").hasRole("ADMIN")
+			.antMatchers("/address/**").authenticated()
+			.antMatchers("/image/**").permitAll()
+			.antMatchers("/user/createAccount").permitAll()
+			.antMatchers("/user/save").permitAll()
 			.antMatchers("/").permitAll()
 			.anyRequest().authenticated()
 			.and().formLogin().loginPage("/login").permitAll()
 			.and().logout().logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
+		
+		CharacterEncodingFilter filter = new CharacterEncodingFilter(); 
+		filter.setEncoding("UTF-8"); 
+		filter.setForceEncoding(true); 
+		http.addFilterBefore(filter, CsrfFilter.class);
 	}
 	
 	@Override
@@ -41,5 +58,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 		auth.userDetailsService(userDao)
 			.passwordEncoder(new BCryptPasswordEncoder());
 	}
+	
 	
 }

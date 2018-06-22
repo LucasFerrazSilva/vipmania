@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,19 +23,28 @@ public class UserDAO implements UserDetailsService{
 	private EntityManager entityManager;
 	
 	
-	public User get(String email) {
-		List<User> list = entityManager.createQuery("select u from User u where u.email = :email", User.class).setParameter("email", email).getResultList();
+	public User get(Long id) {
+		User user = entityManager.find(User.class, id);
 		
-		if(list == null || list.isEmpty())
-			throw new UsernameNotFoundException("User with email " + email + " not found");
+		if(user == null)
+			throw new UsernameNotFoundException("User with id " + id + " not found");
 		
-		return list.get(0);
+		return user;
+	}
+	
+	
+	public User getWithoutCheck(Long id) {
+		return entityManager.find(User.class, id);
 	}
 
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		return get(email);
+		TypedQuery<User> query = entityManager.createQuery("select u from User u where u.email = :email", User.class);
+		
+		query.setParameter("email", email);
+		
+		return (UserDetails) query.getSingleResult();
 	}
 
 	public void createAdmin() {
@@ -54,5 +64,26 @@ public class UserDAO implements UserDetailsService{
 
 		entityManager.persist(admin);
 	}
+
+
+	public List<User> list() {
+		return entityManager.createQuery("select u from User u order by u.name", User.class).getResultList();
+	}
+
+
+	public void save(User user) {
+		if(user == null)
+			throw new IllegalArgumentException("User cannot be null");
+		
+		if(user.isNew()) {
+			user.encryptPassword();
+			entityManager.persist(user);
+		}
+		else {
+			entityManager.merge(user);
+		}
+	}
+	
+	
 	
 }

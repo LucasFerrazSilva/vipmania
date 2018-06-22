@@ -5,24 +5,28 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="tags" %>
 
 <tags:pageTemplate title="">
-	<div class="container">	
-		<div>${message}</div>
+	<div class="container">
+		<div class="col-sm-12">
+			Página inicial
+		</div>
+	
+		<br />
+		<div class="col-sm-12">
+			<hr />
+		</div>
+	
+		<c:forEach items="${products}" var="product">
+			<div class="col-sm-3 product-item text-center">
+				<a class="product-item-a" href="<c:url value="/product/${product.id}" />">
+					<img src="<c:url value="/image/${product.id}" />" height="150" width="150"/><br />
+					${product.name} <br />
+					${product.formattedValue}
+				</a>
+			</div>
+		</c:forEach>
 		
-		<table class="table table-bordered table-hover table-striped">
-			<thead>
-				<tr>
-					<th>Nome</th>
-					<th>Valor</th>
-				</tr>
-			</thead>
-			<tbody>
-				<c:forEach items="${products}" var="product">
-					<tr>
-						<td><a href="${s:mvcUrl('PC#detail').arg(0, product.id).build()}">${product.name}</a></td>
-						<td>${product.value}</td>
-					</tr>
-				</c:forEach>
-			</tbody>
-		</table>
+		<div class="col-sm-12">
+			<hr />
+		</div>
 	</div>
 </tags:pageTemplate>

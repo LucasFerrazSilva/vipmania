@@ -1,14 +1,21 @@
 package br.com.vipmania.model;
 
+import static java.lang.String.format;
+import static javax.persistence.CascadeType.ALL;
+import static javax.persistence.FetchType.EAGER;
 import static javax.persistence.GenerationType.IDENTITY;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
@@ -25,13 +32,25 @@ public class Product {
 	
 	private BigDecimal value;
 	
-	private String category;
+	@ManyToOne
+	private Category category;
 	
 	private Calendar validFrom;
 	
 	private Calendar validTo;
 	
 	private String photoPath;
+	
+	@ManyToOne
+	private Size size;
+
+	@OneToMany(mappedBy="product", cascade=ALL, fetch=EAGER)
+	private List<QuantityBySize> quantities;
+	
+	
+	public Product() {
+		updateProductAtQuantities();
+	}
 	
 
 	public boolean hasInvalidValue() {
@@ -44,6 +63,51 @@ public class Product {
 		return (calendar == null ? "" : format.format(calendar.getTime()));
 	}
 	
+
+	public boolean isNew() {
+		return (id == null);
+	}
+	
+	public boolean isAvailable() {
+		if(quantities == null || quantities.size() == 0)
+			return false;
+		
+		for(QuantityBySize quantity : quantities) {
+			if(quantity.getQuantity() > 0)
+				return true;
+		}
+		
+		return false;		
+	}
+	
+	public void updateProductAtQuantities() {
+		if(quantities == null)
+			return;
+		
+		for (QuantityBySize quantityBySize : quantities) {
+			if(!quantityBySize.hasProduct())
+				quantityBySize.setProduct(this);
+		}
+	}
+
+	public boolean isBuyable() {
+		return validFrom.before(Calendar.getInstance()) && (validTo == null || validTo.after(Calendar.getInstance()));
+	}
+	
+	public Long getMaxQuantity(SizeItem sizeItem) {
+		QuantityBySize size = getQuantityBySize(sizeItem);
+		
+		return (size == null ? null : size.getQuantity());
+	}
+	
+	public QuantityBySize getQuantityBySize(SizeItem sizeItem) {
+		for(QuantityBySize quantity : quantities) {
+			if(quantity.getSizeItem().equals(sizeItem))
+				return quantity;
+		}
+		
+		return null;
+	}
 	
 	public Long getId() {
 		return id;
@@ -65,6 +129,10 @@ public class Product {
 		return description;
 	}
 	
+	public String getFormattedDescription() {
+		return (description == null ? "" : description.replace("\r\n", "<br />"));
+	}
+	
 	public void setDescription(String description) {
 		this.description = description;
 	}
@@ -73,16 +141,24 @@ public class Product {
 		this.value = value;
 	}
 
-	public String getCategory() {
+	public Category getCategory() {
 		return category;
 	}
 	
-	public void setCategory(String category) {
+	public String getCategoryName() {
+		return (category == null ? "" : category.getName());
+	}
+	
+	public void setCategory(Category category) {
 		this.category = category;
 	}
 
 	public BigDecimal getValue() {
 		return value;
+	}
+	
+	public String getFormattedValue() {
+		return (value == null ? "" : format("R$ %.02f", value));
 	}
 	
 	public Calendar getValidFrom() {
@@ -118,6 +194,55 @@ public class Product {
 		this.photoPath = photoPath;
 	}
 
+	public Size getSize() {
+		return size;
+	}
+
+	public void setSize(Size size) {
+		this.size = size;
+	}
+
+	
+	public List<QuantityBySize> getQuantities() {
+		return quantities;
+	}
+	
+	public List<SizeItem> getAvailableSizes(){
+		if(quantities == null)
+			return null;
+		
+		List<SizeItem> items = new ArrayList<SizeItem>();
+		
+		for(QuantityBySize quantityBySize : quantities) {
+			if(quantityBySize.getQuantity() > 0)
+				items.add(quantityBySize.getSizeItem());
+		}
+		
+		return items;
+	}
+	
+	public QuantityBySize getQuantity(Long sizeItemId) {
+		if(quantities == null || sizeItemId == null)	
+			return null;
+		
+		for(QuantityBySize item : quantities)
+			if(sizeItemId.equals(item.getSizeItemId()))
+					return item;
+		
+		return null;
+	}
+
+	public void setQuantities(List<QuantityBySize> quantities) {
+		this.quantities = quantities;
+	}
+
+	@Override
+	public String toString() {
+		return "Product [id=" + id + ", name=" + name + ", description=" + description + ", value=" + value
+				+ ", category=" + category + ", validFrom=" + validFrom + ", validTo=" + validTo + ", photoPath="
+				+ photoPath + ", size=" + size + "]";
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -127,6 +252,7 @@ public class Product {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((photoPath == null) ? 0 : photoPath.hashCode());
+		result = prime * result + ((size == null) ? 0 : size.hashCode());
 		result = prime * result + ((validFrom == null) ? 0 : validFrom.hashCode());
 		result = prime * result + ((validTo == null) ? 0 : validTo.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
@@ -167,6 +293,11 @@ public class Product {
 				return false;
 		} else if (!photoPath.equals(other.photoPath))
 			return false;
+		if (size == null) {
+			if (other.size != null)
+				return false;
+		} else if (!size.equals(other.size))
+			return false;
 		if (validFrom == null) {
 			if (other.validFrom != null)
 				return false;
@@ -185,11 +316,4 @@ public class Product {
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return "Product [id=" + id + ", name=" + name + ", description=" + description + ", value=" + value
-				+ ", category=" + category + ", validFrom=" + validFrom + ", validTo=" + validTo + ", photo=" + photoPath
-				+ "]";
-	}
-			
 }
