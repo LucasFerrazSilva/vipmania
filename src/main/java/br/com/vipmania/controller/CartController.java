@@ -3,27 +3,30 @@ package br.com.vipmania.controller;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUEST;
 
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
+import java.util.List;
+
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import br.com.vipmania.dao.AddressDAO;
+import br.com.vipmania.dao.OrderDAO;
 import br.com.vipmania.dao.ProductDAO;
+import br.com.vipmania.model.Address;
 import br.com.vipmania.model.Cart;
 import br.com.vipmania.model.CartItem;
-import br.com.vipmania.model.PaymentData;
-import br.com.vipmania.model.Product;
+import br.com.vipmania.model.CartItemList;
+import br.com.vipmania.model.Order;
 import br.com.vipmania.model.User;
 import br.com.vipmania.service.EmailService;
+import br.com.vipmania.service.FreteService;
+import br.com.vipmania.wrapper.CorreiosServicoWrapper;
 
 @Controller
 @RequestMapping("/cart")
@@ -31,27 +34,29 @@ import br.com.vipmania.service.EmailService;
 public class CartController {
 
 	@Autowired
-	private ProductDAO productDao;
-	
-	@Autowired
 	private Cart cart;
-	
-	@Autowired
-	private RestTemplate restTemplate;
 	
 	@Autowired
 	private EmailService emailService;
 	
+	@Autowired
+	private ProductDAO productDao;
 	
-	@RequestMapping("/add")
-	public ModelAndView add(Long id, RedirectAttributes redirectAttributes) {
-		ModelAndView modelAndView = new ModelAndView("redirect:/product/list");
+	@Autowired
+	private OrderDAO orderDao;
+	
+	@Autowired
+	private AddressDAO addressDao;
+	
+	@Autowired
+	private FreteService freteService;
+	
+	
+	@RequestMapping("/add/")
+	public ModelAndView add(CartItemList items, RedirectAttributes redirectAttributes) {
+		ModelAndView modelAndView = new ModelAndView("redirect:/");
 		
-		Product product = productDao.get(id);
-		
-		CartItem item = new CartItem(product);
-		
-		cart.add(item);
+		cart.addAll(items);
 
 		redirectAttributes.addFlashAttribute("message", "Produto adicionado ao carrinho com sucesso");
 		
@@ -59,42 +64,61 @@ public class CartController {
 	}
 	
 	@RequestMapping("")
-	public ModelAndView list() {
+	public ModelAndView list(@AuthenticationPrincipal User user) {
 		ModelAndView modelAndView = new ModelAndView("/cart/list");
 		
+		List<Address> addresses = addressDao.list(user);
+		CorreiosServicoWrapper frete = (addresses != null && addresses.size() > 0 ? freteService.getServicoWrapper(addresses.get(0).getCep()) : null);
+		
 		modelAndView.addObject("itens", cart.getItens());
+		modelAndView.addObject("frete", frete);
+		modelAndView.addObject("adresses", addresses);
 		
 		return modelAndView;
 	}
 	
-	@RequestMapping(value="/finalize", method=POST)
-	public Callable<ModelAndView> finalize(@AuthenticationPrincipal User user, ArrayList<CartItem> itens, RedirectAttributes redirectAttributes) {
-		return () -> {
-			String uri = "http://book-payment.herokuapp.com/payment";
-			
-			String result = "";
-			
-			try {
-				result = restTemplate.postForObject(uri, new PaymentData(cart.getTotalValue()), String.class);
-				
-				emailService.send(user.getEmail());
-			}
-			catch(HttpClientErrorException e) {
-				e.printStackTrace();
-				result = "Valor maior que o permitido";
-			}
-			
-			redirectAttributes.addFlashAttribute("message", result);
-			
-			return new ModelAndView("redirect:/product/list");
-		};
+	@RequestMapping("/send-to-paypal")
+	public ModelAndView sendToPaypal() {
+		return new ModelAndView("/cart/finalize");
 	}
 	
-	@RequestMapping("/remove/{id}")
-	public ModelAndView remove(@PathVariable("id") Long productId, RedirectAttributes redirectAttributes) {
-		Product product = productDao.get(productId);
+	@RequestMapping(value="/finalize", method=POST)
+	@Transactional
+	public ModelAndView finalize(@AuthenticationPrincipal User user, CartItemList items, Address address, RedirectAttributes redirectAttributes) {
+		cart.setItens(items.getItens(productDao));
+
+		if(cart.hasInvalidQuantity()) {
+			redirectAttributes.addFlashAttribute("message", "A quantidade selecionada de um ou mais produtos é maior do que a quantidade em estoque");
+			
+			return new ModelAndView("redirect:/cart");
+		}
 		
-		cart.remove(product);
+		ModelAndView modelAndView = new ModelAndView("redirect:/cart/send-to-paypal");
+		
+		CorreiosServicoWrapper frete = freteService.getServicoWrapper(address.getCep());
+		
+		redirectAttributes.addFlashAttribute("items", cart.getItens());
+		redirectAttributes.addFlashAttribute("frete", frete);
+		
+		Order order = cart.generateOrder(user, address, frete);
+		
+		orderDao.save(order);
+		
+		emailService.send(user.getEmail(), order.getId());
+		
+		cart.clearItens();
+		
+		return modelAndView;
+	}
+	
+	@RequestMapping("/finalize-test")
+	public void finalizeTest() {
+		emailService.send("lucasferrazsilva@hotmail.com", 1L);
+	}
+	
+	@RequestMapping("/remove")
+	public ModelAndView remove(CartItem item, RedirectAttributes redirectAttributes) {
+		cart.remove(item);
 		
 		redirectAttributes.addFlashAttribute("message", "Produto removido");
 		

@@ -1,7 +1,8 @@
 package br.com.vipmania.controller;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
@@ -14,12 +15,12 @@ public class HomeController {
 	@Autowired
 	private ProductDAO dao;
 	
+	
 	@RequestMapping("/")
-	@Cacheable(value="productsHome")
-	public ModelAndView index() {
+	public ModelAndView index() throws IOException {
 		ModelAndView modelAndView = new ModelAndView("index");
 		
-		modelAndView.addObject("products", dao.list());
+		modelAndView.addObject("products", dao.listMostRecents());
 		
 		return modelAndView;
 	

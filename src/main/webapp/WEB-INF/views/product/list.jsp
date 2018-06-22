@@ -8,7 +8,7 @@
 	<div class="container">	
 		<h1>Lista de Produtos</h1>
 		
-		<div>${message}</div>
+		<hr />
 		
 		<table class="table table-bordered table-hover table-striped">
 			<thead>
@@ -23,13 +23,21 @@
 			<tbody>
 				<c:forEach items="${products}" var="product">
 					<tr>
-						<td><a href="<c:url value="/product/detail/${product.id}" />">${product.name}</a></td>
+						<td><a href="<c:url value="/product/form/${product.id}" />">${product.name}</a></td>
 						<td>${product.value}</td>
-						<td>${product.category}</td>
+						<td>${product.categoryName}</td>
 						<td>${product.formattedValidFrom}</td>
 						<td>${product.formattedValidTo}</td>
 					</tr>
 				</c:forEach>
+				
+      			<security:authorize access="hasRole('ROLE_ADMIN')">
+					<tr>
+						<td style="text-align: center;" colspan="5">
+							<a class="btn btn-success btn-block" href="<c:url value="/product/form/0" />" role="button">+</a>
+						</td>
+					</tr>
+				</security:authorize>
 			</tbody>
 		</table>
 	</div>

@@ -1,18 +1,15 @@
 package br.com.vipmania.conf;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.guava.GuavaCacheManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.DateFormatter;
 import org.springframework.format.datetime.DateFormatterRegistrar;
 import org.springframework.format.support.DefaultFormattingConversionService;
@@ -34,17 +31,47 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
-import com.google.common.cache.CacheBuilder;
-
 import br.com.vipmania.controller.HomeController;
+import br.com.vipmania.converter.AddressConverter;
+import br.com.vipmania.converter.CategoryConverter;
+import br.com.vipmania.converter.OrderConverter;
+import br.com.vipmania.converter.ProductConverter;
+import br.com.vipmania.converter.QuantityBySizeConverter;
+import br.com.vipmania.converter.SizeConverter;
+import br.com.vipmania.converter.SizeItemConverter;
+import br.com.vipmania.converter.UserConverter;
 import br.com.vipmania.dao.ProductDAO;
 import br.com.vipmania.model.Cart;
 import br.com.vipmania.service.FileService;
 
 @EnableWebMvc
-@ComponentScan(basePackageClasses={HomeController.class, ProductDAO.class, FileService.class, Cart.class})
-@EnableCaching
+@ComponentScan(basePackageClasses={HomeController.class, ProductDAO.class, FileService.class, Cart.class, CategoryConverter.class})
 public class AppWebConfiguration extends WebMvcConfigurerAdapter {
+
+	@Autowired
+	private CategoryConverter categoryConverter;
+
+	@Autowired
+	private ProductConverter productConverter;
+
+	@Autowired
+	private UserConverter userConverter;
+	
+	@Autowired
+	private OrderConverter orderConverter;
+	
+	@Autowired
+	private AddressConverter addressConverter;
+	
+	@Autowired
+	private SizeConverter sizeConverter;
+	
+	@Autowired
+	private SizeItemConverter sizeItemConverter;
+	
+	@Autowired
+	private QuantityBySizeConverter quantityBySizeConverter;
+	
 	
 	@Bean
 	public InternalResourceViewResolver internalResourceViewResolver() {
@@ -76,6 +103,7 @@ public class AppWebConfiguration extends WebMvcConfigurerAdapter {
 		
 		formatterRegistrar.setFormatter(new DateFormatter("dd/MM/yyyy"));
 		formatterRegistrar.registerFormatters(conversionService);
+		addFormatters(conversionService);
 		
 		return conversionService;
 	}
@@ -88,17 +116,6 @@ public class AppWebConfiguration extends WebMvcConfigurerAdapter {
 	@Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
-	}
-	
-	@Bean
-	public CacheManager cacheManager() {
-		CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(5, MINUTES);
-		
-		GuavaCacheManager cacheManager = new GuavaCacheManager();
-		
-		cacheManager.setCacheBuilder(builder);
-		
-		return cacheManager;
 	}
 	
 	@Bean
@@ -149,5 +166,17 @@ public class AppWebConfiguration extends WebMvcConfigurerAdapter {
 		
 		return mailSender;
 	}
+
+	@Override
+    public void addFormatters(FormatterRegistry formatterRegistry){
+        formatterRegistry.addConverter(categoryConverter);
+        formatterRegistry.addConverter(productConverter);
+        formatterRegistry.addConverter(userConverter);
+        formatterRegistry.addConverter(orderConverter);
+        formatterRegistry.addConverter(addressConverter);
+        formatterRegistry.addConverter(sizeConverter);
+        formatterRegistry.addConverter(sizeItemConverter);
+        formatterRegistry.addConverter(quantityBySizeConverter);
+    }
 	
 }
