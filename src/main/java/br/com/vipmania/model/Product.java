@@ -40,7 +40,7 @@ public class Product {
 
 	private String formatDate(Calendar calendar) {
 		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-		
+		 
 		return (calendar == null ? "" : format.format(calendar.getTime()));
 	}
 	
